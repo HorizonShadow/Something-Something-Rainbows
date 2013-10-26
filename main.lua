@@ -4,21 +4,26 @@ local Barrier = require("barrier")
 local Field = require("field")
 local Goal = require("Goal")
 local tx, ty = 0, 0
-
+local help = true
 tileSize = 32
 local nextLevel = 1
 function love.draw()
-	
-	love.graphics.translate(math.floor(tx), math.floor(ty))
-	map:autoDrawRange(math.floor(tx), math.floor(ty), 1, pad)
-	map:draw()
+	if(help) then
+		love.graphics.drawq(img,q,0,0)
+	else
+		love.graphics.translate(math.floor(tx), math.floor(ty))
+		map:autoDrawRange(math.floor(tx), math.floor(ty), 1, pad)
+		map:draw()
 
-	objects.player:draw()
-	love.graphics.setColor(255,255,255)
-	love.graphics.print(tostring(objects.player.canJump), 0,0)
-	
+		objects.player:draw()
+		love.graphics.setColor(255,255,255)
+		love.graphics.print(tostring(objects.player.canJump), 0,0)
+	end
 end
 function love.update(dt)
+	if love.mouse.isDown("l") then
+		help = false
+	end
 	world:update(dt)
 	local player = objects.player
 	local pGridCoords = player:getGridCoords()
@@ -83,7 +88,9 @@ function init()
 	love.graphics.setBackgroundColor(104, 136, 248)
 end
 function love.load()
-	loadMap("level9.tmx")
+	img = love.graphics.newImage("lib/HowToPlay.png")
+	q = love.graphics.newQuad(0,0,800,800,800,800)
+	loadMap("level7.tmx")
 	init()
 	
 end

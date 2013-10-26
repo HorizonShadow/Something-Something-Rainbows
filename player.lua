@@ -73,9 +73,9 @@ function Player:setControls(s)
 		self:setLeftMove(force, 0)
 		self:setJump(0, -force/2)
 	elseif s == "indigo" then
-		self.fixture:setRestitution(1-self.fixture:getRestitution())
+		self.fixture:setRestitution(1)
 	elseif s== "blue" then
-		self.fixture:setDensity(1-self.fixture:getDensity())
+		self.fixture:setDensity(0)
 	end
 	local x, y = self.jumpForces.x, self.jumpForces.y
 	return x == 0 and 0 or -math.abs(x)/x , y == 0 and 0 or -math.abs(y)/y
@@ -88,22 +88,25 @@ function Player:removeCollision()
 end
 function Player:onGround(nx, ny)
 	local status = false
-	local xDir = math.abs(self.jumpForces.x) / self.jumpForces.x 
-	local yDir = math.abs(self.jumpForces.y) / self.jumpForces.y
-	print (ny, nx)
-	if yDir < 0 then status = ny > 28
-	elseif yDir > 0 then status = ny < -28
-	elseif xDir > 0 then status = nx > 28
-	elseif xDir < 0 then status = nx < -28
+	local xDir = getSign(self.jumpForces.x)
+	local yDir = getSign(self.jumpForces.y)
+	if yDir < 0 then status = ny == 32 or ny == -32
+	elseif yDir > 0 then status = ny == -32 or ny == 32
+	elseif xDir < 0 then status = nx == 32
+	elseif xDir > 0 then status = nx == -32	
 	end
+	print(yDir, xDir, nx, ny)
 	return status
 end
 function Player:againstWall(nx, ny)
 	local status = false
-	local xDir = math.abs(self.rightForces.x) / self.rightForces.x
-	local yDir = math.abs(self.rightForces.y) / self.rightForces.y
+	local xDir = getSign(self.rightForces.x)
+	local yDir = getSign(self.rightForces.y)
 	status = nx == 32 or nx == -32 or ny == 32 or ny == -32
 	return status
+end
+function getSign(x)
+	return x==0 and 0 or math.abs(x) / x
 end
 function Player:setCanJump(x)
 	self.canJump = x
