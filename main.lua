@@ -47,7 +47,6 @@ function love.update(dt)
 	end
 end
 function loadMap(s)
-	print(s)
 	atl = require("AdvTiledLoader")
 	atl.Loader.path = 'lib/'
 	map = atl.Loader.load(tostring(s))
@@ -90,7 +89,7 @@ end
 function love.load()
 	img = love.graphics.newImage("lib/HowToPlay.png")
 	q = love.graphics.newQuad(0,0,800,800,800,800)
-	loadMap("level7.tmx")
+	loadMap("level5.tmx")
 	init()
 	
 end
@@ -98,12 +97,10 @@ function loadNextLevel()
 	loadMap("level"..tostring(nextLevel)..".tmx")
 	init()
 end
-function beginContact(a, b, coll)
-	--print(a:getBody():getLinearVelocity())
+function beginContact(a, b, coll)	
 	local player = objects.player
 	player:addCollision()
-	if player:onGround(coll:getNormal()) then
-		print("yea")
+	if player:onGround(a,b) then
 		player:setCanJump(true)
 	end
 	if(a:getUserData() == "goal" or b:getUserData() == "goal") then
@@ -118,11 +115,15 @@ function endContact(a, b, coll)
 	end
 end
 function preSolve(a,b,coll)
-	--This is a fix for when the player would get stuck on flat ground
 	local player = objects.player
 	if(player:againstWall(coll:getNormal())) then
 		if not (love.physics.getDistance(a,b) == 0) then
 			coll:setEnabled(false)
+		end
+	end
+	if(true) then
+		if player:onGround(a,b) then
+			player:setCanJump(true)
 		end
 	end
 end

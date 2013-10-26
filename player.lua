@@ -1,6 +1,7 @@
 Player = {}
 tileSize = 32
 local force = 110
+local jumpForce = 30
 function Player:new(world, x, y)
 
 	body = love.physics.newBody(world, x, y, "dynamic")
@@ -18,7 +19,7 @@ function Player:new(world, x, y)
 		fixture = fixture,
 		leftForces = {x = -force, y = 0},
 		rightForces = {x = force, y = 0},
-		jumpForces = {x = 0, y = -force/2},
+		jumpForces = {x = 0, y = -jumpForce},
 		numColls = 0,
 		canJump = true
 	}
@@ -55,23 +56,23 @@ function Player:setControls(s)
 	if s == "red" then
 		self:setRightMove(force,0)
 		self:setLeftMove(-force,0)
-		self:setJump(0,force/2)
+		self:setJump(0,jumpForce)
 	elseif s == "orange" then
 		self:setRightMove(0,force)
 		self:setLeftMove(0,-force)
-		self:setJump(-force/2,0)
+		self:setJump(-jumpForce,0)
 	elseif s == "yellow" then
 		self:setRightMove(0, -force)
 		self:setLeftMove(0, force)
-		self:setJump(force/2, 0)
+		self:setJump(jumpForce, 0)
 	elseif s == "green" then
 		self:setRightMove(force, 0)
 		self:setLeftMove(-force, 0)
-		self:setJump(0, -force/2)
+		self:setJump(0, -jumpForce)
 	elseif s == "violet" then
 		self:setRightMove(-force, 0)
 		self:setLeftMove(force, 0)
-		self:setJump(0, -force/2)
+		self:setJump(0, -jumpForce)
 	elseif s == "indigo" then
 		self.fixture:setRestitution(1)
 	elseif s== "blue" then
@@ -86,17 +87,38 @@ end
 function Player:removeCollision()
 	self.numColls = self.numColls - 1
 end
-function Player:onGround(nx, ny)
-	local status = false
+function Player:onGround(a, b)
+	local x,y = nil, nil
+	if(a:getUserData() == "Player") then
+		x, y = a, b
+	else
+		x, y = b, a
+	end
 	local xDir = getSign(self.jumpForces.x)
 	local yDir = getSign(self.jumpForces.y)
-	if yDir < 0 then status = ny == 32 or ny == -32
-	elseif yDir > 0 then status = ny == -32 or ny == 32
-	elseif xDir < 0 then status = nx == 32
-	elseif xDir > 0 then status = nx == -32	
-	end
-	print(yDir, xDir, nx, ny)
+	local playerX, playerY = x:getBody():getX(), x:getBody():getY()
+	local floorX, floorY = y:getBody():getX(), y:getBody():getY()
+	local gPX, gPY = math.ceil((playerX-(16/2))/tileSize) + 1, math.ceil((playerY-(16/2))/tileSize)+1
+	local fPX, fPY = math.ceil((floorX-(32/2))/tileSize) + 1, math.ceil((floorY - (32/2))/tileSize)+1
+	if yDir == -1 then status = playerY < floorY and gPX == fPX end --If gravity is pushing down
+	if yDir == 1 then status = playerY > floorY and gPX == fPX end --if gravity is pushing up
+	if xDir == 1 then status = playerX > floorX and gPY == fPY end --if gravity is pushing to the left
+	if xDir == -1 then status = playerX < floorX and gPY == fPY end -- if gravity is pushing to the right	
 	return status
+end
+function calcNormals(a,b)
+	local x, y = nil
+
+	if a:getUserData() == "Player" then
+		x = a
+		y = b
+	else
+		x = b
+		y = a
+	end
+	local dx = y:getBody():getX() - x:getBody():getX()
+	local dy = y:getBody():getY() - x:getBody():getY()
+	return dx, -dy
 end
 function Player:againstWall(nx, ny)
 	local status = false
@@ -110,6 +132,9 @@ function getSign(x)
 end
 function Player:setCanJump(x)
 	self.canJump = x
+end
+function Player:getCanJump()
+	return self.canJump
 end
 function Player:hasCollisions()
 	return self.numColls > 0
