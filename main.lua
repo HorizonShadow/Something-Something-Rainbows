@@ -8,15 +8,7 @@ local map = atl.Loader.load("test.tmx")
 local tx, ty = 0, 0
 tileSize = 32
 numColl = 0
-fieldCount = {
-	red = 0,
-	orange = 0,
-	yellow = 0,
-	green = 0,
-	blue = 0,
-	indigo = 0,
-	violet = 0
-}
+canJump = true
 function love.draw()
 	
 	love.graphics.translate(math.floor(tx), math.floor(ty))
@@ -29,6 +21,26 @@ end
 function love.update(dt)
 	world:update(dt)
 	player = objects.player
+	pGridCoords = player:getGridCoords()
+	for id, field in pairs(objects.fields) do 
+		fGridCoords = field:getGridCoords()
+		if fGridCoords.x == pGridCoords.x and fGridCoords.y == pGridCoords.y then
+			data = field.fixture:getUserData() 
+			if data == "Red" then 
+				world:setGravity(0,-9.81*tileSize)
+				player:setControls("red")
+			elseif data == "Orange" then
+				world:setGravity(9.81*tileSize, 0)
+				player:setControls("orange")
+			elseif data == "Yellow" then
+			elseif data == "Green" then
+			elseif data == "Blue" then
+			elseif data == "Indigo" then
+			elseif data == "Violet" then
+			end
+		end
+
+	end	
 	if love.keyboard.isDown("left") then 
 		player:moveLeft()
 	end	
@@ -46,6 +58,7 @@ function love.load()
 	world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 	objects = {}
 	objects.ground = {}
+	objects.fields = {}
 	for x,y,tile in map("Tile Layer 1"):iterate() do
 		if tile.properties.name == "floor" then
 			Barrier:new(world, x*tileSize, y*tileSize, tileSize, tileSize, "Floor")
@@ -54,29 +67,35 @@ function love.load()
 			Barrier:new(world, x*tileSize, y*tileSize, tileSize, tileSize, "Wall")	
 		end
 		if tile.properties.name == "spawn" then
-			objects.player = Player:new(world, x*tileSize, y*tileSize, tileSize, tileSize)
+			objects.player = Player:new(world, x*tileSize, y*tileSize)
 		end
 		if tile.properties.name == "red" then
-			Field:new(world, x*tileSize, y*tileSize, tileSize, tileSize, "Red")
+			objects.fields[#objects.fields + 1] = Field:new(world, x*tileSize, y*tileSize, tileSize, tileSize, "Red")
+		end
+		if tile.properties.name == "orange" then 
+			objects.fields[#objects.fields + 1] = Field:new(world, x*tileSize, y*tileSize, tileSize, tileSize, "Orange")
 		end
 	end
-	  love.graphics.setBackgroundColor(104, 136, 248)
+	love.graphics.setBackgroundColor(104, 136, 248)
  end
 
 function beginContact(a, b, coll)
-	if (a:getUserData() ~= "Wall" and b:getUserData() ~= "Wall") then
-			numColl = numColl + 1
-	end
-	if a:getUserData() == "Red" or b:getUserData() == "Red" then
-		fieldCount.red = fieldCount.red + 1
+	numColl = numColl + 1
+	
+
 end
 function endContact(a, b, coll)
-	if (a:getUserData() ~= "Wall" and b:getUserData() ~= "Wall") then
-			numColl = numColl - 1
+	numColl = numColl - 1
+	if numColl == 0 then 
+		canJump = false
 	end
 end
 
 function preSolve(a, b, coll)
+	nx, ny = coll:getNormal()
+	if(nx < -30 or nx > 30) then 
+		canJump = false
+	else
 end
 
 function postSolve(a, b, coll)
