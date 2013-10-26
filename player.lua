@@ -1,10 +1,10 @@
 Player = {}
 tileSize = 32
-local force = 400
+local force = 110
 function Player:new(world, x, y)
 
 	body = love.physics.newBody(world, x, y, "dynamic")
-	shape = love.physics.newRectangleShape(32,32)
+	shape = love.physics.newRectangleShape(16,16)
 	fixture = love.physics.newFixture(body, shape, 1)
 	fixture:setRestitution(0.0)
 	fixture:setFriction(0.1)
@@ -27,7 +27,9 @@ function Player:new(world, x, y)
 end
 function Player:draw()
 	love.graphics.setColor(255,255,255)
-	love.graphics.rectangle("fill", self.body:getX(), self.body:getY(), 32, 32)
+	love.graphics.rectangle("fill", self.body:getX()+8, self.body:getY()+8, 16, 16)
+	love.graphics.setColor(0,0,0)
+	love.graphics.rectangle("line", self.body:getX()+8, self.body:getY()+8, 16, 16)
 	love.graphics.setColor(love.graphics.getBackgroundColor())
 end
 function Player:moveLeft()
@@ -44,8 +46,8 @@ function Player:jump()
 end
 function Player:getGridCoords()
 	local c = {
-		x = math.ceil((self.body:getX()-(tileSize/2)) / tileSize) + 1,
-		y = math.ceil((self.body:getY()-(tileSize/2)) / tileSize) + 1
+		x = math.ceil((self.body:getX()-(16/2)) / tileSize) + 1,
+		y = math.ceil((self.body:getY()-(16/2)) / tileSize) + 1
 	}
 	return c
 end
@@ -66,7 +68,17 @@ function Player:setControls(s)
 		self:setRightMove(force, 0)
 		self:setLeftMove(-force, 0)
 		self:setJump(0, -force/2)
+	elseif s == "violet" then
+		self:setRightMove(-force, 0)
+		self:setLeftMove(force, 0)
+		self:setJump(0, -force/2)
+	elseif s == "indigo" then
+		self.fixture:setRestitution(1-self.fixture:getRestitution())
+	elseif s== "blue" then
+		self.fixture:setDensity(1-self.fixture:getDensity())
 	end
+	local x, y = self.jumpForces.x, self.jumpForces.y
+	return x == 0 and 0 or -math.abs(x)/x , y == 0 and 0 or -math.abs(y)/y
 end
 function Player:addCollision()
 	self.numColls = self.numColls + 1
@@ -78,11 +90,11 @@ function Player:onGround(nx, ny)
 	local status = false
 	local xDir = math.abs(self.jumpForces.x) / self.jumpForces.x 
 	local yDir = math.abs(self.jumpForces.y) / self.jumpForces.y
-	if yDir < 0 then 
-		status = ny > 28
+	print (ny, nx)
+	if yDir < 0 then status = ny > 28
 	elseif yDir > 0 then status = ny < -28
-	elseif xDir < 0 then status = nx > 28
-	elseif xDir > 0 then status = ny < -28
+	elseif xDir > 0 then status = nx > 28
+	elseif xDir < 0 then status = nx < -28
 	end
 	return status
 end

@@ -1,12 +1,12 @@
 io.stdout:setvbuf("no")
-local atl = require("AdvTiledLoader")
 local Player = require("player")
 local Barrier = require("barrier")
 local Field = require("field")
-atl.Loader.path = 'lib/'
-local map = atl.Loader.load("test.tmx")
+local Goal = require("Goal")
 local tx, ty = 0, 0
+
 tileSize = 32
+local nextLevel = 1
 function love.draw()
 	
 	love.graphics.translate(math.floor(tx), math.floor(ty))
@@ -25,19 +25,9 @@ function love.update(dt)
 	for id, field in pairs(objects.fields) do 
 		fGridCoords = field:getGridCoords()
 		if fGridCoords.x == pGridCoords.x and fGridCoords.y == pGridCoords.y then
-			local data = field.fixture:getUserData() 
-			if data == "Red" then 
-				world:setGravity(0,-9.81*tileSize)
-				player:setControls("red")
-			elseif data == "Orange" then
-				world:setGravity(9.81*tileSize, 0)
-				player:setControls("orange")
-			elseif data == "Yellow" then
-			elseif data == "Green" then
-			elseif data == "Blue" then
-			elseif data == "Indigo" then
-			elseif data == "Violet" then
-			end
+			local data = field.fixture:getUserData()
+			x, y = player:setControls(data)
+			world:setGravity(x * 9.81 * tileSize, y * 9.81 * tileSize)
 		end
 	end	
 
@@ -51,7 +41,14 @@ function love.update(dt)
 		player:jump()
 	end
 end
-function love.load()
+function loadMap(s)
+	print(s)
+	atl = require("AdvTiledLoader")
+	atl.Loader.path = 'lib/'
+	map = atl.Loader.load(tostring(s))
+	nextLevel = nextLevel + 1
+end
+function init()
 	love.graphics.setMode(25*tileSize, 25*tileSize, false, false, 0)
 	love.physics.setMeter(tileSize)
 	world = love.physics.newWorld(0,9.81*tileSize, true)
@@ -60,32 +57,50 @@ function love.load()
 	objects.ground = {}
 	objects.fields = {}
 	for x,y,tile in map("Tile Layer 1"):iterate() do
-		if tile.properties.name == "floor" then
+		local name = tile.properties.name
+		if name == "floor" then
 			objects.ground[#objects.ground+1] = Barrier:new(world, x*tileSize, y*tileSize, tileSize, tileSize, "Floor")
-			
 		end
-		if tile.properties.name == "wall" then
+		if name == "wall" then
 			Barrier:new(world, x*tileSize, y*tileSize, tileSize, tileSize, "Wall")	
 		end
-		if tile.properties.name == "spawn" then
+		if name == "spawn" then
 			objects.player = Player:new(world, x*tileSize, y*tileSize)
 		end
-		if tile.properties.name == "red" then
-			objects.fields[#objects.fields + 1] = Field:new(world, x*tileSize, y*tileSize, tileSize, tileSize, "Red")
+		if  name == "red" or 
+			name == "orange" or
+			name == "yellow" or
+			name == "green" or 
+			name == "blue" or 
+			name == "indigo" or 
+			name == "violet" then
+				objects.fields[#objects.fields + 1] = Field:new(world, x*tileSize, y*tileSize, tileSize, tileSize, name)
 		end
-		if tile.properties.name == "orange" then 
-			objects.fields[#objects.fields + 1] = Field:new(world, x*tileSize, y*tileSize, tileSize, tileSize, "Orange")
+		if name == "goal" then
+			objects.goal = Goal:new(world, x*tileSize, y*tileSize, tileSize, tileSize, "goal")
 		end
 	end
 	love.graphics.setBackgroundColor(104, 136, 248)
- end
-
+end
+function love.load()
+	loadMap("level9.tmx")
+	init()
+	
+end
+function loadNextLevel()
+	loadMap("level"..tostring(nextLevel)..".tmx")
+	init()
+end
 function beginContact(a, b, coll)
 	--print(a:getBody():getLinearVelocity())
 	local player = objects.player
 	player:addCollision()
 	if player:onGround(coll:getNormal()) then
+		print("yea")
 		player:setCanJump(true)
+	end
+	if(a:getUserData() == "goal" or b:getUserData() == "goal") then
+		loadNextLevel()
 	end
 end
 function endContact(a, b, coll)
