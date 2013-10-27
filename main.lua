@@ -5,6 +5,7 @@ local Field = require("field")
 local Goal = require("Goal")
 local tx, ty = 0, 0
 local help = true
+local firstLevel = "level4.tmx"
 tileSize = 32
 local nextLevel = 1
 function love.draw()
@@ -37,13 +38,36 @@ function love.update(dt)
 	end	
 
 	if love.keyboard.isDown("left") then 
-		player:moveLeft()
+		if(player:getState() == "orange") then
+			player:jump()
+		elseif player:getState() == "yellow" then
+		else player:moveLeft()
+		end
 	end	
 	if love.keyboard.isDown("right") then
-		player:moveRight()
+		if player:getState() == "yellow" then
+			player:jump()
+		elseif player:getState() == "orange" then
+		else player:moveRight()
+		end
 	end 
 	if love.keyboard.isDown("up") then 
-		player:jump()
+		if player:getState() == "orange" then
+			player:moveRight()
+		elseif player:getState() == "yellow" then
+			player:moveLeft()
+		elseif player:getState() == "red" then
+		else player:jump()
+		end
+	end
+	if love.keyboard.isDown("down") then
+		if player:getState() == "orange" then
+			player:moveLeft()
+		elseif player:getState() == "yellow" then
+			player:moveRight()
+		elseif player:getState() == "red" then
+			player:jump()
+		end
 	end
 end
 function loadMap(s)
@@ -89,7 +113,7 @@ end
 function love.load()
 	img = love.graphics.newImage("lib/HowToPlay.png")
 	q = love.graphics.newQuad(0,0,800,800,800,800)
-	loadMap("level5.tmx")
+	loadMap(firstLevel)
 	init()
 	
 end

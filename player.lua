@@ -58,12 +58,12 @@ function Player:setControls(s)
 		self:setLeftMove(-force,0)
 		self:setJump(0,jumpForce)
 	elseif s == "orange" then
-		self:setRightMove(0,force)
-		self:setLeftMove(0,-force)
+		self:setRightMove(0,-force)
+		self:setLeftMove(0,force)
 		self:setJump(-jumpForce,0)
 	elseif s == "yellow" then
-		self:setRightMove(0, -force)
-		self:setLeftMove(0, force)
+		self:setRightMove(0, force)
+		self:setLeftMove(0, -force)
 		self:setJump(jumpForce, 0)
 	elseif s == "green" then
 		self:setRightMove(force, 0)
@@ -105,6 +105,17 @@ function Player:onGround(a, b)
 	if xDir == 1 then status = playerX > floorX and gPY == fPY end --if gravity is pushing to the left
 	if xDir == -1 then status = playerX < floorX and gPY == fPY end -- if gravity is pushing to the right	
 	return status
+end
+function Player:getState()
+	if self.jumpForces.x > 0 then
+		return "yellow"
+	elseif self.jumpForces.x < 0 then
+		return "orange"
+	elseif self.jumpForces.y > 0 then
+		return "red"
+	elseif self.jumpForces.y < 0 then
+		return "green"
+	end
 end
 function calcNormals(a,b)
 	local x, y = nil
