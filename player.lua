@@ -128,7 +128,6 @@ function Player:setControls(s)
 		self:setLeftMove(-force, 0)
 		self:setJump(0, -jumpForce)
 	elseif s == "violet" and not self.inViolet then
-		print("play v")
 		playSound(violetSound)
 		self.violet = not self.violet
 		self.inViolet = true
@@ -151,47 +150,30 @@ end
 function Player:removeCollision()
 	self.numColls = self.numColls - 1
 end
-function Player:onGround2(a,b)
-    local x,y = nil, nil
-    if(a:getUserData() == "Player") then
-            x, y = a, b
-    else
-            x, y = b, a
-    end
-    local xDir = getSign(self.jumpForces.x)
-    local yDir = getSign(self.jumpForces.y)
-    local playerX, playerY = x:getBody():getX(), x:getBody():getY()
-    local floorX, floorY = y:getBody():getX(), y:getBody():getY()
-    local gPX, gPY = math.ceil((playerX-(16/2))/tileSize) + 1, math.ceil((playerY-(16/2))/tileSize)+1
-    local fPX, fPY = math.ceil((floorX-(32/2))/tileSize) + 1, math.ceil((floorY - (32/2))/tileSize)+1
-    if yDir == -1 then status = playerY < floorY and gPX == fPX end --If gravity is pushing down
-    if yDir == 1 then status = playerY > floorY and gPX == fPX end --if gravity is pushing up
-    if xDir == 1 then status = playerX > floorX and gPY == fPY end --if gravity is pushing to the left
-    if xDir == -1 then status = playerX < floorX and gPY == fPY end -- if gravity is pushing to the right   
-    return status
-end
 function Player:setPreDirection()
 	local vx, vy = self.body:getLinearVelocity()
 	self.moveX = vx
 	self.moveY = vy
 end
-function Player:onGround()
-
+function Player:onGround(nx,ny)
 	local xDir = getSign(self.jumpForces.x)
 	local yDir = getSign(self.jumpForces.y)
 	local vx, vy = self.body:getLinearVelocity()
-	if yDir == -1 and self.moveY >= 0 and vy == 0 then --Gravity is pushing down
-		return true
-	elseif yDir == 1 and self.moveY <= 0 and vy == 0 then --Gravity is pushing up
-		return true
-	elseif xDir == -1 and self.moveX >= 0 and vx == 0 then
-		return true
-	elseif xDir == 1 and self.moveX <= 0 and vx == 0 then
-		return true
+	if yDir ~= 0 and math.abs(nx) == 32 then return false end
+	if xDir ~= 0 and math.abs(ny) == 32 then return false end
+
+	if getSign(vy) == -getSign(self.moveY) and (self.moveY ~= 0 or vy ~= 0) and yDir ~= 0 then return true end
+	if getSign(vx) == -getSign(self.moveX) and (self.moveX ~= 0 or vx ~= 0) and xDir ~= 0 then return true end
+	if math.floor(vy) == 0 then
+		if yDir < 0 and self.moveY >= 0 then return true end
+		if yDir > 0 and self.moveY <= 0 then return true end
+	end
+	if vx == 0 then
+		if xDir < 0 and self.moveX >= 0 then return true end
+		if xDir > 0 and self.moveX <= 0 then return true end
 	end
 
 	return false
-
 end
 function Player:getState()
 	if self.jumpForces.x > 0 then

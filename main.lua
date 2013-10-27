@@ -22,12 +22,14 @@ local goalSound = love.audio.newSource("lib/goal.wav")
 local hitSound = love.audio.newSource("lib/hitSound.wav")
 local hitWall = false
 local hitGround = false
-
 hitSound:setVolume(.1)
 
 function love.draw()
 	if(help) then
 		love.graphics.drawq(img,q,0,0)
+		paused = true
+	elseif thanks then
+		love.graphics.drawq(thanksimg,tq, 0, 0)
 		paused = true
 	else
 		paused = false
@@ -37,13 +39,11 @@ function love.draw()
 
 		objects.player:draw()
 		love.graphics.setColor(255,255,255)
-		love.graphics.print(tostring(hitWall), 0,0)
-		if objects.player.body:getLinearVelocity() then
-			love.graphics.print(objects.player.body:getLinearVelocity(), 100, 0)
-		end
+		love.graphics.print("level "..(nextLevel-1),0,0)
 	end
 end
 function love.update(dt)
+
 	if love.mouse.isDown("l") then
 		help = false
 	end
@@ -65,6 +65,7 @@ function love.update(dt)
 		hitWall = false
 		hitGround = false
 	end
+
 	if love.keyboard.isDown("left") or love.keyboard.isDown("a") then 
 		if(player:getState() == "orange") then
 			player:jump()
@@ -189,13 +190,19 @@ function love.load()
 	goalSound:rewind()
 	img = love.graphics.newImage("lib/HowToPlay.png")
 	q = love.graphics.newQuad(0,0,800,800,800,800)
+	thanksimg = love.graphics.newImage("lib/thanks.png")
+	tq = love.graphics.newQuad(0,0,800,800,800,800)
 	loadMap(firstLevel)
 	init()
 	
 end
 function loadNextLevel()
-	loadMap("level"..tostring(nextLevel)..".tmx")
-	init()
+	if nextLevel == 15 then
+		thanks = true
+	else
+		loadMap("level"..tostring(nextLevel)..".tmx")
+		init()
+	end
 end
 function beginContact(a, b, coll)	
 	local player = objects.player
@@ -211,20 +218,18 @@ function beginContact(a, b, coll)
 		hitSound:rewind()		
 		hitWall = true
 	end
-
-
 end
 function endContact(a, b, coll)
 	local player = objects.player
 	player:removeCollision()
 	if not player:hasCollisions() then
 		player:setCanJump(false)
+		player:setIsJumping(true)
 	end
 end
 function postSolve(a,b,coll)
 	local player = objects.player
-	print (player:onGround())
-	if player:onGround() then
+	if player:onGround(coll:getNormal()) then
 		if not hitGround then
 			love.audio.play(hitSound)
 			hitSound:rewind()
@@ -245,18 +250,4 @@ function preSolve(a,b,coll)
 		end
 	end
 	player:setPreDirection()
-	--[[if player:onGround(a,b) then
-		if not hitGround then
-			love.audio.play(hitSound)
-			hitSound:rewind()
-			hitWall = false
-		end
-		hitGround = true
-		if not player:getIsJumping() then
-			player:setCanJump(true)
-		end
-		player:setIsJumping(false)
-	end--]]
-
-
 end
