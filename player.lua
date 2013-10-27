@@ -1,14 +1,30 @@
-Player = {}
-tileSize = 32
+local Player = {}
+local tileSize = 32
 local force = 110
-local jumpForce = 30
+local jumpForce = 60
+local jumpSound = love.audio.newSource("lib/jump7.wav")
+local greenSound = love.audio.newSource("lib/powerup42.wav")
+local redSound = love.audio.newSource("lib/redSound.wav")
+local orangeSound = love.audio.newSource("lib/orangeSound.wav")
+local yellowSound = love.audio.newSource("lib/yellowSound.wav")
+local blueSound = love.audio.newSource("lib/blueSound.wav")
+local violetSound = love.audio.newSource("lib/violetSound.wav")
+local indigoSound = love.audio.newSource("lib/indigoSound.wav")
+jumpSound:setVolume(.2)
+greenSound:setVolume(.2)
+redSound:setVolume(.2)
+orangeSound:setVolume(.2)
+blueSound:setVolume(.2)
+violetSound:setVolume(.2)
+yellowSound:setVolume(.2)
+indigoSound:setVolume(.2)
 function Player:new(world, x, y)
-
 	body = love.physics.newBody(world, x, y, "dynamic")
 	shape = love.physics.newRectangleShape(16,16)
 	fixture = love.physics.newFixture(body, shape, 1)
 	fixture:setRestitution(0.0)
-	fixture:setFriction(0.1)
+	fixture:setFriction(0.9)
+	fixture:setDensity(1)
 	fixture:setUserData("Player")
 	fixture:setMask(7)
 	fixture:setCategory(8)
@@ -21,7 +37,18 @@ function Player:new(world, x, y)
 		rightForces = {x = force, y = 0},
 		jumpForces = {x = 0, y = -jumpForce},
 		numColls = 0,
-		canJump = true
+		canJump = true,
+		violet = false,
+		inViolet = false,
+		inRed = false,
+		inOrange = false,
+		inYellow = false,
+		inGreen = false,
+		inBlue = false,
+		inIndigo = false,
+		isJumping = false,
+		moveX = 0,
+		moveY = 0
 	}
 	setmetatable(p, {__index = Player})
 	return p
@@ -40,10 +67,21 @@ function Player:moveRight()
 	self.body:applyForce(self.rightForces.x, self.rightForces.y)
 end
 function Player:jump()
-	if(self.canJump) then 
+	if(self.canJump and not self.isJumping) then 
+		self.isJumping = true
 		self.canJump = false
+		love.audio.play(jumpSound)
+		love.audio.rewind(jumpSound)
 		self.body:applyLinearImpulse(self.jumpForces.x, self.jumpForces.y)
+		return true
 	end
+	return false
+end
+function Player:getIsJumping()
+	return self.isJumping
+end
+function Player:setIsJumping(s)
+	self.isJumping = s
 end
 function Player:getGridCoords()
 	local c = {
@@ -52,31 +90,57 @@ function Player:getGridCoords()
 	}
 	return c
 end
+function Player:isViolet()
+	return self.violet
+end
+function playSound(s)
+	love.audio.play(s)
+	s:rewind()
+end
 function Player:setControls(s)
-	if s == "red" then
+	if s ~= "violet" then self.inViolet = false end
+	if s ~= "red" then self.inRed = false end
+	if s ~= "orange" then self.inOrange = false end
+	if s ~= "yellow" then self.inYellow = false end
+	if s ~= "green" then self.inGreen = false end
+	if s == "red" and not self.inRed then
+		self.inRed = true
+		playSound(redSound)
 		self:setRightMove(force,0)
 		self:setLeftMove(-force,0)
 		self:setJump(0,jumpForce)
-	elseif s == "orange" then
+	elseif s == "orange" and not self.inOrange then
+		self.inOrange = true
+		playSound(orangeSound)
 		self:setRightMove(0,-force)
 		self:setLeftMove(0,force)
 		self:setJump(-jumpForce,0)
-	elseif s == "yellow" then
+	elseif s == "yellow" and not self.inYellow then
+		self.inYellow = true
+		playSound(yellowSound)
 		self:setRightMove(0, force)
 		self:setLeftMove(0, -force)
 		self:setJump(jumpForce, 0)
-	elseif s == "green" then
+	elseif s == "green" and not self.inGreen then
+		self.inGreen = true
+		playSound(greenSound)
 		self:setRightMove(force, 0)
 		self:setLeftMove(-force, 0)
 		self:setJump(0, -jumpForce)
-	elseif s == "violet" then
-		self:setRightMove(-force, 0)
-		self:setLeftMove(force, 0)
-		self:setJump(0, -jumpForce)
-	elseif s == "indigo" then
-		self.fixture:setRestitution(1)
-	elseif s== "blue" then
-		self.fixture:setDensity(0)
+	elseif s == "violet" and not self.inViolet then
+		print("play v")
+		playSound(violetSound)
+		self.violet = not self.violet
+		self.inViolet = true
+	elseif s == "indigo" and not self.inIndigo then
+		playSound(indigoSound)
+		self.inIndigo = true
+		self.fixture:setRestitution(.9)
+	elseif s == "blue" and not self.inBlue then
+		playSound(blueSound)
+		self.inBlue = true
+		self.fixture:setDensity(.1)
+		self.fixture:getBody():resetMassData()
 	end
 	local x, y = self.jumpForces.x, self.jumpForces.y
 	return x == 0 and 0 or -math.abs(x)/x , y == 0 and 0 or -math.abs(y)/y
@@ -87,24 +151,47 @@ end
 function Player:removeCollision()
 	self.numColls = self.numColls - 1
 end
-function Player:onGround(a, b)
-	local x,y = nil, nil
-	if(a:getUserData() == "Player") then
-		x, y = a, b
-	else
-		x, y = b, a
-	end
+function Player:onGround2(a,b)
+    local x,y = nil, nil
+    if(a:getUserData() == "Player") then
+            x, y = a, b
+    else
+            x, y = b, a
+    end
+    local xDir = getSign(self.jumpForces.x)
+    local yDir = getSign(self.jumpForces.y)
+    local playerX, playerY = x:getBody():getX(), x:getBody():getY()
+    local floorX, floorY = y:getBody():getX(), y:getBody():getY()
+    local gPX, gPY = math.ceil((playerX-(16/2))/tileSize) + 1, math.ceil((playerY-(16/2))/tileSize)+1
+    local fPX, fPY = math.ceil((floorX-(32/2))/tileSize) + 1, math.ceil((floorY - (32/2))/tileSize)+1
+    if yDir == -1 then status = playerY < floorY and gPX == fPX end --If gravity is pushing down
+    if yDir == 1 then status = playerY > floorY and gPX == fPX end --if gravity is pushing up
+    if xDir == 1 then status = playerX > floorX and gPY == fPY end --if gravity is pushing to the left
+    if xDir == -1 then status = playerX < floorX and gPY == fPY end -- if gravity is pushing to the right   
+    return status
+end
+function Player:setPreDirection()
+	local vx, vy = self.body:getLinearVelocity()
+	self.moveX = vx
+	self.moveY = vy
+end
+function Player:onGround()
+
 	local xDir = getSign(self.jumpForces.x)
 	local yDir = getSign(self.jumpForces.y)
-	local playerX, playerY = x:getBody():getX(), x:getBody():getY()
-	local floorX, floorY = y:getBody():getX(), y:getBody():getY()
-	local gPX, gPY = math.ceil((playerX-(16/2))/tileSize) + 1, math.ceil((playerY-(16/2))/tileSize)+1
-	local fPX, fPY = math.ceil((floorX-(32/2))/tileSize) + 1, math.ceil((floorY - (32/2))/tileSize)+1
-	if yDir == -1 then status = playerY < floorY and gPX == fPX end --If gravity is pushing down
-	if yDir == 1 then status = playerY > floorY and gPX == fPX end --if gravity is pushing up
-	if xDir == 1 then status = playerX > floorX and gPY == fPY end --if gravity is pushing to the left
-	if xDir == -1 then status = playerX < floorX and gPY == fPY end -- if gravity is pushing to the right	
-	return status
+	local vx, vy = self.body:getLinearVelocity()
+	if yDir == -1 and self.moveY >= 0 and vy == 0 then --Gravity is pushing down
+		return true
+	elseif yDir == 1 and self.moveY <= 0 and vy == 0 then --Gravity is pushing up
+		return true
+	elseif xDir == -1 and self.moveX >= 0 and vx == 0 then
+		return true
+	elseif xDir == 1 and self.moveX <= 0 and vx == 0 then
+		return true
+	end
+
+	return false
+
 end
 function Player:getState()
 	if self.jumpForces.x > 0 then
