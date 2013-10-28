@@ -58,7 +58,7 @@ function Player:draw()
 	love.graphics.rectangle("fill", self.body:getX()+8, self.body:getY()+8, 16, 16)
 	love.graphics.setColor(0,0,0)
 	love.graphics.rectangle("line", self.body:getX()+8, self.body:getY()+8, 16, 16)
-	love.graphics.setColor(love.graphics.getBackgroundColor())
+	love.graphics.setColor(love.graphics.getBackgroundColor())	
 end
 function Player:moveLeft()
 	self.body:applyForce(self.leftForces.x, self.leftForces.y)
@@ -67,7 +67,8 @@ function Player:moveRight()
 	self.body:applyForce(self.rightForces.x, self.rightForces.y)
 end
 function Player:jump()
-	if(self.canJump and not self.isJumping) then 
+--	print(self.canJump, not self.isJumping)
+	if self.canJump then 
 		self.isJumping = true
 		self.canJump = false
 		love.audio.play(jumpSound)
@@ -76,12 +77,6 @@ function Player:jump()
 		return true
 	end
 	return false
-end
-function Player:getIsJumping()
-	return self.isJumping
-end
-function Player:setIsJumping(s)
-	self.isJumping = s
 end
 function Player:getGridCoords()
 	local c = {
@@ -103,6 +98,7 @@ function Player:setControls(s)
 	if s ~= "orange" then self.inOrange = false end
 	if s ~= "yellow" then self.inYellow = false end
 	if s ~= "green" then self.inGreen = false end
+
 	if s == "red" and not self.inRed then
 		self.inRed = true
 		playSound(redSound)
@@ -161,10 +157,15 @@ function Player:onGround(nx,ny)
 	local vx, vy = self.body:getLinearVelocity()
 	if yDir ~= 0 and math.abs(nx) == 32 then return false end
 	if xDir ~= 0 and math.abs(ny) == 32 then return false end
-
-	if getSign(vy) == -getSign(self.moveY) and (self.moveY ~= 0 or vy ~= 0) and yDir ~= 0 then return true end
-	if getSign(vx) == -getSign(self.moveX) and (self.moveX ~= 0 or vx ~= 0) and xDir ~= 0 then return true end
-	if math.floor(vy) == 0 then
+	if self.moveY ~= 0 or vy ~= 0 then
+		if getSign(vy) < 0 and getSign(self.moveY) > 0 and yDir < 0 then return true end
+		if getSign(vy) > 0 and getSign(self.moveY) < 0 and yDir > 0 then return true end
+	end
+	if self.moveX ~= 0 or vx ~= 0 then
+		if getSign(vx) < 0 and getSign(self.moveX) > 0 and xDir < 0 then return true end
+		if getSign(vx) > 0 and getSign(self.moveX) < 0 and xDir > 0 then return true end
+	end
+	if vy == 0 then
 		if yDir < 0 and self.moveY >= 0 then return true end
 		if yDir > 0 and self.moveY <= 0 then return true end
 	end

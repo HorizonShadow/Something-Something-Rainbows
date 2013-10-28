@@ -1,7 +1,7 @@
 Field = {}
 tileSize = 32
 function Field:new(world, x, y, w, h, userData)
-	body = love.physics.newBody(world, x, y)
+	body = love.physics.newBody(world, x, y, "static")
 	shape = love.physics.newRectangleShape(w, h)
 	fixture = love.physics.newFixture(body, shape)
 	fixture:setUserData(userData)

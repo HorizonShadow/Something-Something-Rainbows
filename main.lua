@@ -14,7 +14,7 @@ local Field = require("field")
 local Goal = require("Goal")
 local tx, ty = 0, 0
 local help = true
-local firstLevel = "level1.tmx"
+local firstLevel = "level9.tmx"
 tileSize = 32
 local nextLevel = 1
 local paused = false
@@ -60,11 +60,7 @@ function love.update(dt)
 			world:setGravity(x * 9.81 * tileSize, y * 9.81 * tileSize)
 		end
 	end	
-	if not player:hasCollisions() then
-		player:setCanJump(false)
-		hitWall = false
-		hitGround = false
-	end
+	
 
 	if love.keyboard.isDown("left") or love.keyboard.isDown("a") then 
 		if(player:getState() == "orange") then
@@ -126,6 +122,11 @@ function love.update(dt)
 		elseif player:getState() == "red" then
 			player:jump()
 		end
+	end
+	if not player:hasCollisions() then
+		player:setCanJump(false)
+		hitWall = false
+		hitGround = false
 	end
 	if love.keyboard.isDown("r") then
 		reset()
@@ -204,7 +205,8 @@ function loadNextLevel()
 		init()
 	end
 end
-function beginContact(a, b, coll)	
+function beginContact(a, b, coll)
+
 	local player = objects.player
 	player:addCollision()
 	if(a:getUserData() == "goal" or b:getUserData() == "goal") then
@@ -214,6 +216,7 @@ function beginContact(a, b, coll)
 	end
 	
 	if not player:getCanJump() and not hitWall then
+		
 		love.audio.play(hitSound)
 		hitSound:rewind()		
 		hitWall = true
@@ -222,10 +225,6 @@ end
 function endContact(a, b, coll)
 	local player = objects.player
 	player:removeCollision()
-	if not player:hasCollisions() then
-		player:setCanJump(false)
-		player:setIsJumping(true)
-	end
 end
 function postSolve(a,b,coll)
 	local player = objects.player
@@ -236,10 +235,7 @@ function postSolve(a,b,coll)
 			hitWall = false
 		end
 		hitGround = true
-		if not player:getIsJumping() then
-			player:setCanJump(true)
-		end
-		player:setIsJumping(false)
+		player:setCanJump(true)
 	end
 end
 function preSolve(a,b,coll)
