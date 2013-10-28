@@ -2,8 +2,8 @@ local Player = {}
 local tileSize = 32
 local force = 110
 local jumpForce = 60
-local jumpSound = love.audio.newSource("lib/jump7.wav")
-local greenSound = love.audio.newSource("lib/powerup42.wav")
+local jumpSound = love.audio.newSource("lib/Jump7.wav")
+local greenSound = love.audio.newSource("lib/Powerup42.wav")
 local redSound = love.audio.newSource("lib/redSound.wav")
 local orangeSound = love.audio.newSource("lib/orangeSound.wav")
 local yellowSound = love.audio.newSource("lib/yellowSound.wav")
@@ -165,7 +165,7 @@ function Player:onGround(nx,ny)
 		if getSign(vx) < 0 and getSign(self.moveX) > 0 and xDir < 0 then return true end
 		if getSign(vx) > 0 and getSign(self.moveX) < 0 and xDir > 0 then return true end
 	end
-	if vy == 0 then
+	if vyw == 0 then
 		if yDir < 0 and self.moveY >= 0 then return true end
 		if yDir > 0 and self.moveY <= 0 then return true end
 	end
