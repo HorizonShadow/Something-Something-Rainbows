@@ -90,7 +90,7 @@ function Player:onGround(nx, ny)
 	local status = false
 	local xDir = math.abs(self.jumpForces.x) / self.jumpForces.x 
 	local yDir = math.abs(self.jumpForces.y) / self.jumpForces.y
-	print (ny, nx)
+	print (xDir, yDir)
 	if yDir < 0 then status = ny > 28
 	elseif yDir > 0 then status = ny < -28
 	elseif xDir > 0 then status = nx > 28
