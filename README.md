@@ -4,5 +4,4 @@ Platformer type of game.
 
 ### Controls ###
 
-Arrow keys
-
+Arrow keys or WASD
